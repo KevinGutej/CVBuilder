@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom CV Builder</title>
+    <title>Advanced CV Builder</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -25,6 +26,7 @@
             color: white;
             text-align: center;
             padding: 1.5rem 0;
+            position: relative;
         }
 
         header h1 {
@@ -33,6 +35,17 @@
 
         header p {
             font-size: 1.2rem;
+        }
+
+        .dark-mode-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
         }
 
         .container {
@@ -71,7 +84,8 @@
 
         input,
         textarea,
-        button {
+        button,
+        select {
             width: 100%;
             padding: 0.8rem;
             font-size: 1rem;
@@ -80,35 +94,10 @@
         }
 
         input:focus,
-        textarea:focus {
+        textarea:focus,
+        select:focus {
             border-color: #0056b3;
             outline: none;
-        }
-
-        .tags-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            padding: 0.5rem;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            background: #f8f9fa;
-            margin-bottom: 1rem;
-        }
-
-        .tag {
-            background: #0056b3;
-            color: white;
-            border-radius: 3px;
-            padding: 0.5rem;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-        }
-
-        .tag i {
-            margin-left: 0.5rem;
-            cursor: pointer;
         }
 
         button {
@@ -123,17 +112,6 @@
 
         button:hover {
             background: #003f8a;
-        }
-
-        .dark-mode-toggle {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
         }
 
         .preview-section {
@@ -164,27 +142,35 @@
             margin-right: 0.5rem;
         }
 
-        .flex-row {
-            display: flex;
-            gap: 1rem;
+        .progress-bar {
+            background: #f0f0f0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 2rem;
         }
 
-        .flex-row>div {
-            flex: 1;
+        .progress {
+            background: #0056b3;
+            height: 10px;
+            width: 0;
+            transition: width 0.3s;
         }
     </style>
 </head>
 
 <body>
     <header>
-        <h1>Custom CV Builder</h1>
-        <p>Create a professional CV quickly and easily!</p>
+        <h1>Advanced CV Builder</h1>
+        <p>Create a detailed and professional CV effortlessly!</p>
         <button class="dark-mode-toggle" onclick="toggleDarkMode()">🌙</button>
     </header>
     <main>
         <div class="container">
-            <section class="form-section">
-                <h2>Personal Details</h2>
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+            <section id="step1" class="form-section">
+                <h2>Step 1: Personal Details</h2>
                 <form id="cvForm">
                     <div class="form-group">
                         <label for="name">Full Name</label>
@@ -207,14 +193,23 @@
                         <input type="url" id="github" placeholder="https://github.com/username">
                     </div>
                     <div class="form-group">
+                        <label for="photo">Profile Photo</label>
+                        <input type="file" id="photo" accept="image/*">
+                    </div>
+                    <div class="form-group">
                         <label for="summary">Professional Summary</label>
                         <textarea id="summary" rows="3" placeholder="Write a brief professional summary"
                             required></textarea>
                     </div>
+                    <button type="button" onclick="nextStep()">Next</button>
+                </form>
+            </section>
+            <section id="step2" class="form-section" style="display: none;">
+                <h2>Step 2: Skills and Experience</h2>
+                <form>
                     <div class="form-group">
-                        <label for="skills">Skills</label>
-                        <div class="tags-container" id="skillsTags"></div>
-                        <input type="text" id="skillsInput" placeholder="Type a skill and press Enter">
+                        <label for="skills">Skills (comma-separated)</label>
+                        <input type="text" id="skills" placeholder="e.g., HTML, CSS, JavaScript">
                     </div>
                     <div class="form-group">
                         <label for="experience">Experience</label>
@@ -224,19 +219,8 @@
                         <label for="education">Education</label>
                         <textarea id="education" rows="4" placeholder="e.g., Degree - Institution - Year"></textarea>
                     </div>
-                    <div class="form-group">
-                        <label for="certifications">Certifications</label>
-                        <textarea id="certifications" rows="3"
-                            placeholder="e.g., Course Name - Institution - Year"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="hobbies">Hobbies</label>
-                        <textarea id="hobbies" rows="3" placeholder="e.g., Reading, Traveling, Coding"></textarea>
-                    </div>
-                    <div class="flex-row">
-                        <button type="submit">Generate CV</button>
-                        <button type="button" onclick="resetForm()">Clear</button>
-                    </div>
+                    <button type="button" onclick="prevStep()">Back</button>
+                    <button type="button" onclick="generatePreview()">Finish</button>
                 </form>
             </section>
             <section class="preview-section">
@@ -244,29 +228,52 @@
                 <div class="preview-content" id="cvPreview">
                     <p>Your CV will be generated here.</p>
                 </div>
+                <button onclick="downloadPDF()">Download as PDF</button>
             </section>
         </div>
     </main>
     <script>
-        const cvForm = document.getElementById("cvForm");
-        const cvPreview = document.getElementById("cvPreview");
-        const skillsTags = document.getElementById("skillsTags");
-        const skillsInput = document.getElementById("skillsInput");
-        let skills = [];
+        let currentStep = 1;
 
-        function updatePreview() {
+        function nextStep() {
+            document.getElementById(`step${currentStep}`).style.display = "none";
+            currentStep++;
+            document.getElementById(`step${currentStep}`).style.display = "block";
+            updateProgressBar();
+        }
+
+        function prevStep() {
+            document.getElementById(`step${currentStep}`).style.display = "none";
+            currentStep--;
+            document.getElementById(`step${currentStep}`).style.display = "block";
+            updateProgressBar();
+        }
+
+        function updateProgressBar() {
+            const progress = (currentStep / 2) * 100;
+            document.getElementById("progress").style.width = `${progress}%`;
+        }
+
+        function toggleDarkMode() {
+            document.body.style.setProperty("--bg-color", document.body.style.getPropertyValue("--bg-color") === "#333" ? "#f4f4f8" : "#333");
+            document.body.style.setProperty("--text-color", document.body.style.getPropertyValue("--text-color") === "#f4f4f8" ? "#333" : "#f4f4f8");
+        }
+
+        function generatePreview() {
             const name = document.getElementById("name").value.trim();
             const email = document.getElementById("email").value.trim();
             const phone = document.getElementById("phone").value.trim();
             const linkedin = document.getElementById("linkedin").value.trim() || "N/A";
             const github = document.getElementById("github").value.trim() || "N/A";
             const summary = document.getElementById("summary").value.trim();
+            const skills = document.getElementById("skills").value.split(",").map(skill => skill.trim());
             const experience = document.getElementById("experience").value.trim().split("\n");
             const education = document.getElementById("education").value.trim().split("\n");
-            const certifications = document.getElementById("certifications").value.trim().split("\n");
-            const hobbies = document.getElementById("hobbies").value.trim().split(",").map(hobby => hobby.trim());
+            const photo = document.getElementById("photo").files[0];
+            const photoURL = photo ? URL.createObjectURL(photo) : "";
 
             const cvTemplate = `
+                ${photoURL ? `<img src="${photoURL}" alt="${name}" style="width: 150px; border-radius: 50%; margin-bottom: 20px;">` : ""}
                 <h2>${name}</h2>
                 <p><strong>Email:</strong> ${email}</p>
                 <p><strong>Phone:</strong> ${phone}</p>
@@ -284,53 +291,21 @@
                 <hr>
                 <h3>Education</h3>
                 <ul>${education.map(edu => `<li><i class="fas fa-graduation-cap"></i>${edu}</li>`).join("")}</ul>
-                <hr>
-                <h3>Certifications</h3>
-                <ul>${certifications.map(cert => `<li><i class="fas fa-certificate"></i>${cert}</li>`).join("")}</ul>
-                <hr>
-                <h3>Hobbies</h3>
-                <ul>${hobbies.map(hobby => `<li><i class="fas fa-heart"></i>${hobby}</li>`).join("")}</ul>
             `;
-            cvPreview.innerHTML = cvTemplate;
+            document.getElementById("cvPreview").innerHTML = cvTemplate;
         }
 
-        skillsInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter" && skillsInput.value.trim()) {
-                e.preventDefault();
-                const skill = skillsInput.value.trim();
-                skills.push(skill);
-                skillsTags.innerHTML += `<span class="tag">${skill}<i class="fas fa-times" onclick="removeSkill('${skill}')"></i></span>`;
-                skillsInput.value = "";
-                updatePreview();
-            }
-        });
-
-        function removeSkill(skill) {
-            skills = skills.filter(s => s !== skill);
-            skillsTags.innerHTML = "";
-            skills.forEach(s => {
-                skillsTags.innerHTML += `<span class="tag">${s}<i class="fas fa-times" onclick="removeSkill('${s}')"></i></span>`;
-            });
-            updatePreview();
+        function downloadPDF() {
+            const element = document.getElementById("cvPreview");
+            const options = {
+                margin: 0.5,
+                filename: 'myCV.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+            html2pdf().from(element).set(options).save();
         }
-
-        function toggleDarkMode() {
-            const isDark = document.body.style.getPropertyValue("--bg-color") === "#333";
-            document.body.style.setProperty("--bg-color", isDark ? "#f4f4f8" : "#333");
-            document.body.style.setProperty("--text-color", isDark ? "#333" : "#f4f4f8");
-        }
-
-        function resetForm() {
-            cvForm.reset();
-            skills = [];
-            skillsTags.innerHTML = "";
-            cvPreview.innerHTML = "<p>Your CV will be generated here.</p>";
-        }
-
-        cvForm.addEventListener("submit", (e) => {
-            e.preventDefault();
-            updatePreview();
-        });
     </script>
 </body>
 
