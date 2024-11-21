@@ -22,7 +22,7 @@
         }
 
         header {
-            background: #0056b3;
+            background: var(--header-color, #0056b3);
             color: white;
             text-align: center;
             padding: 1.5rem 0;
@@ -48,6 +48,12 @@
             right: 1rem;
         }
 
+        .theme-settings {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+        }
+
         .container {
             display: flex;
             flex-wrap: wrap;
@@ -68,7 +74,7 @@
         }
 
         h2 {
-            color: #0056b3;
+            color: var(--header-color, #0056b3);
             margin-bottom: 1rem;
         }
 
@@ -96,12 +102,12 @@
         input:focus,
         textarea:focus,
         select:focus {
-            border-color: #0056b3;
+            border-color: var(--header-color, #0056b3);
             outline: none;
         }
 
         button {
-            background: #0056b3;
+            background: var(--header-color, #0056b3);
             color: white;
             border: none;
             cursor: pointer;
@@ -138,90 +144,123 @@
         }
 
         ul li i {
-            color: #0056b3;
+            color: var(--header-color, #0056b3);
             margin-right: 0.5rem;
         }
 
-        .progress-bar {
-            background: #f0f0f0;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-bottom: 2rem;
+        .step-navigation {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 1.5rem;
         }
 
-        .progress {
-            background: #0056b3;
-            height: 10px;
-            width: 0;
-            transition: width 0.3s;
+        .step-navigation button {
+            padding: 0.8rem 1.2rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 5px;
+            background: var(--header-color, #0056b3);
+            color: white;
+            cursor: pointer;
+        }
+
+        .step-navigation button.disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .color-picker {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .char-count {
+            font-size: 0.9rem;
+            text-align: right;
+            color: #555;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 
 <body>
     <header>
-        <h1>Advanced CV Builder</h1>
+        <h1>Enhanced CV Builder</h1>
         <p>Create a detailed and professional CV effortlessly!</p>
         <button class="dark-mode-toggle" onclick="toggleDarkMode()">🌙</button>
+        <div class="theme-settings">
+            <label class="color-picker">
+                Header Color:
+                <input type="color" id="headerColor" onchange="updateHeaderColor()">
+            </label>
+        </div>
     </header>
     <main>
         <div class="container">
-            <div class="progress-bar">
-                <div class="progress" id="progress"></div>
+            <div class="step-navigation">
+                <button onclick="goToStep(1)" id="stepNav1">Step 1</button>
+                <button onclick="goToStep(2)" id="stepNav2" class="disabled">Step 2</button>
             </div>
             <section id="step1" class="form-section">
                 <h2>Step 1: Personal Details</h2>
                 <form id="cvForm">
                     <div class="form-group">
                         <label for="name">Full Name</label>
-                        <input type="text" id="name" placeholder="Your Full Name" required>
+                        <input type="text" id="name" placeholder="Your Full Name" required oninput="updatePreview()">
                     </div>
                     <div class="form-group">
                         <label for="email">Email</label>
-                        <input type="email" id="email" placeholder="example@mail.com" required>
+                        <input type="email" id="email" placeholder="example@mail.com" required
+                            oninput="updatePreview()">
                     </div>
                     <div class="form-group">
                         <label for="phone">Phone</label>
-                        <input type="tel" id="phone" placeholder="Your Phone Number" required>
+                        <input type="tel" id="phone" placeholder="Your Phone Number" required oninput="updatePreview()">
                     </div>
                     <div class="form-group">
                         <label for="linkedin">LinkedIn</label>
-                        <input type="url" id="linkedin" placeholder="https://linkedin.com/in/username">
+                        <input type="url" id="linkedin" placeholder="https://linkedin.com/in/username"
+                            oninput="updatePreview()">
                     </div>
                     <div class="form-group">
                         <label for="github">GitHub</label>
-                        <input type="url" id="github" placeholder="https://github.com/username">
+                        <input type="url" id="github" placeholder="https://github.com/username"
+                            oninput="updatePreview()">
                     </div>
                     <div class="form-group">
                         <label for="photo">Profile Photo</label>
-                        <input type="file" id="photo" accept="image/*">
+                        <input type="file" id="photo" accept="image/*" onchange="validatePhoto(event)">
                     </div>
                     <div class="form-group">
                         <label for="summary">Professional Summary</label>
-                        <textarea id="summary" rows="3" placeholder="Write a brief professional summary"
-                            required></textarea>
+                        <textarea id="summary" rows="3" placeholder="Write a brief professional summary" maxlength="500"
+                            oninput="updatePreview(); updateCharCount()"></textarea>
+                        <p class="char-count" id="charCount">0 / 500</p>
                     </div>
                     <button type="button" onclick="nextStep()">Next</button>
                 </form>
             </section>
             <section id="step2" class="form-section" style="display: none;">
                 <h2>Step 2: Skills and Experience</h2>
-                <form>
+                <div id="skillsContainer">
+                    <label>Skills</label>
+                    <input type="text" id="skills" placeholder="e.g., HTML, CSS, JavaScript" oninput="updatePreview()">
+                </div>
+                <div id="dynamicExperience">
                     <div class="form-group">
-                        <label for="skills">Skills (comma-separated)</label>
-                        <input type="text" id="skills" placeholder="e.g., HTML, CSS, JavaScript">
+                        <label>Experience</label>
+                        <textarea placeholder="e.g., Job Role - Company - Duration"
+                            oninput="updatePreview()"></textarea>
                     </div>
-                    <div class="form-group">
-                        <label for="experience">Experience</label>
-                        <textarea id="experience" rows="4" placeholder="e.g., Job Role - Company - Duration"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="education">Education</label>
-                        <textarea id="education" rows="4" placeholder="e.g., Degree - Institution - Year"></textarea>
-                    </div>
-                    <button type="button" onclick="prevStep()">Back</button>
-                    <button type="button" onclick="generatePreview()">Finish</button>
-                </form>
+                </div>
+                <button type="button" onclick="prevStep()">Back</button>
+                <button type="button" onclick="generatePreview()">Finish</button>
             </section>
             <section class="preview-section">
                 <h2>Preview Your CV</h2>
@@ -236,17 +275,33 @@
         let currentStep = 1;
 
         function nextStep() {
-            document.getElementById(`step${currentStep}`).style.display = "none";
-            currentStep++;
-            document.getElementById(`step${currentStep}`).style.display = "block";
-            updateProgressBar();
+            if (currentStep < 2) {
+                document.getElementById(`step${currentStep}`).style.display = "none";
+                currentStep++;
+                document.getElementById(`step${currentStep}`).style.display = "block";
+                updateProgressBar();
+                toggleStepNavigation();
+            }
         }
 
         function prevStep() {
-            document.getElementById(`step${currentStep}`).style.display = "none";
-            currentStep--;
-            document.getElementById(`step${currentStep}`).style.display = "block";
-            updateProgressBar();
+            if (currentStep > 1) {
+                document.getElementById(`step${currentStep}`).style.display = "none";
+                currentStep--;
+                document.getElementById(`step${currentStep}`).style.display = "block";
+                updateProgressBar();
+                toggleStepNavigation();
+            }
+        }
+
+        function goToStep(step) {
+            if (step !== currentStep) {
+                document.getElementById(`step${currentStep}`).style.display = "none";
+                currentStep = step;
+                document.getElementById(`step${currentStep}`).style.display = "block";
+                updateProgressBar();
+                toggleStepNavigation();
+            }
         }
 
         function updateProgressBar() {
@@ -254,45 +309,77 @@
             document.getElementById("progress").style.width = `${progress}%`;
         }
 
-        function toggleDarkMode() {
-            document.body.style.setProperty("--bg-color", document.body.style.getPropertyValue("--bg-color") === "#333" ? "#f4f4f8" : "#333");
-            document.body.style.setProperty("--text-color", document.body.style.getPropertyValue("--text-color") === "#f4f4f8" ? "#333" : "#f4f4f8");
+        function toggleStepNavigation() {
+            document.getElementById("stepNav1").classList.toggle("disabled", currentStep === 1);
+            document.getElementById("stepNav2").classList.toggle("disabled", currentStep === 2);
         }
 
-        function generatePreview() {
+        function toggleDarkMode() {
+            const isDark = document.body.style.getPropertyValue("--bg-color") === "#333";
+            document.body.style.setProperty("--bg-color", isDark ? "#f4f4f8" : "#333");
+            document.body.style.setProperty("--text-color", isDark ? "#333" : "#f4f4f8");
+            localStorage.setItem("darkMode", !isDark);
+        }
+
+        function updateHeaderColor() {
+            const color = document.getElementById("headerColor").value;
+            document.body.style.setProperty("--header-color", color);
+            localStorage.setItem("headerColor", color);
+        }
+
+        function validatePhoto(event) {
+            const file = event.target.files[0];
+            const maxSize = 2 * 1024 * 1024;
+            if (file && (file.type.startsWith("image/") && file.size <= maxSize)) {
+                const photoURL = URL.createObjectURL(file);
+                updatePreviewPhoto(photoURL);
+            } else {
+                alert("Please upload a valid image file (max size: 2MB).");
+                event.target.value = "";
+            }
+        }
+
+        function updateCharCount() {
+            const summary = document.getElementById("summary").value;
+            const charCount = summary.length;
+            document.getElementById("charCount").textContent = `${charCount} / 500`;
+        }
+
+        function updatePreview() {
             const name = document.getElementById("name").value.trim();
             const email = document.getElementById("email").value.trim();
             const phone = document.getElementById("phone").value.trim();
             const linkedin = document.getElementById("linkedin").value.trim() || "N/A";
             const github = document.getElementById("github").value.trim() || "N/A";
             const summary = document.getElementById("summary").value.trim();
-            const skills = document.getElementById("skills").value.split(",").map(skill => skill.trim());
-            const experience = document.getElementById("experience").value.trim().split("\n");
-            const education = document.getElementById("education").value.trim().split("\n");
-            const photo = document.getElementById("photo").files[0];
-            const photoURL = photo ? URL.createObjectURL(photo) : "";
+            const skills = document.getElementById("skills").value.split(",").map(skill => skill.trim()).filter(skill => skill);
 
             const cvTemplate = `
-                ${photoURL ? `<img src="${photoURL}" alt="${name}" style="width: 150px; border-radius: 50%; margin-bottom: 20px;">` : ""}
-                <h2>${name}</h2>
+                <h2>${name || "Your Name"}</h2>
                 <p><strong>Email:</strong> ${email}</p>
                 <p><strong>Phone:</strong> ${phone}</p>
                 <p><strong>LinkedIn:</strong> <a href="${linkedin}" target="_blank">${linkedin}</a></p>
                 <p><strong>GitHub:</strong> <a href="${github}" target="_blank">${github}</a></p>
                 <hr>
                 <h3>Professional Summary</h3>
-                <p>${summary}</p>
+                <p>${summary || "Write a brief summary about yourself."}</p>
                 <hr>
                 <h3>Skills</h3>
                 <ul>${skills.map(skill => `<li><i class="fas fa-check-circle"></i>${skill}</li>`).join("")}</ul>
-                <hr>
-                <h3>Experience</h3>
-                <ul>${experience.map(job => `<li><i class="fas fa-briefcase"></i>${job}</li>`).join("")}</ul>
-                <hr>
-                <h3>Education</h3>
-                <ul>${education.map(edu => `<li><i class="fas fa-graduation-cap"></i>${edu}</li>`).join("")}</ul>
             `;
             document.getElementById("cvPreview").innerHTML = cvTemplate;
+        }
+
+        function updatePreviewPhoto(photoURL) {
+            const previewContent = document.getElementById("cvPreview");
+            const imgElement = previewContent.querySelector("img") || document.createElement("img");
+            imgElement.src = photoURL;
+            imgElement.style.cssText = "width: 150px; border-radius: 50%; margin-bottom: 20px;";
+            previewContent.prepend(imgElement);
+        }
+
+        function generatePreview() {
+            updatePreview();
         }
 
         function downloadPDF() {
@@ -306,6 +393,18 @@
             };
             html2pdf().from(element).set(options).save();
         }
+
+        window.onload = function () {
+            const darkMode = localStorage.getItem("darkMode") === "true";
+            const headerColor = localStorage.getItem("headerColor") || "#0056b3";
+
+            if (darkMode) {
+                document.body.style.setProperty("--bg-color", "#333");
+                document.body.style.setProperty("--text-color", "#f4f4f8");
+            }
+            document.body.style.setProperty("--header-color", headerColor);
+            document.getElementById("headerColor").value = headerColor;
+        };
     </script>
 </body>
 
